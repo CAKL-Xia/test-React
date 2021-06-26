@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mime  useState</title>
+</head>
+<body>
+    <script>  
+
+       let  isMount = true; 
+       let  workInProgressHook = null; 
+      
+
+       const fiber ={ 
+           memoizedState: null,
+           stateNode: App,
+       }
+  
+
+       function run (){ 
+           workInProgressHook  = fiber.memoizedState;
+           const app =  fiber.stateNode();
+           isMount = false; 
+           return app 
+       }
+
+   function dispatchAction (queue,action) {
+    const update = { 
+        action,
+        next: null,
+    };
+ 
+    if (queue.pending === null ) {
+        update.next =update;
+    } else {
+        update.next = queue.pending.next;
+        queue.pending.next = update
+    }
+
+    queue.pending = update
+
+    run()
+   }
+
+    function useState (initialState  ){
+      let hook;
+       
+      if (isMount) {
+          hook = { 
+            queue: { 
+                pending: null
+            },
+            memoizedState: initialState,
+            next: null,
+          }
+
+        if (!fiber.memoizedState) {
+            fiber.memoizedState = hook;
+        } else {
+            workInProgressHook.next = hook
+        }
+        workInProgressHook = hook
+
+      } else {
+          hook = workInProgressHook;
+          workInProgressHook = workInProgressHook.next;
+      }
+    let baseState = hook.memoizedState;
+    if (hook.queue.pending) {
+     let firsUpdate = hook.queue.pending.next;
+           
+     do {  
+
+        const action = firsUpdate.action;
+        baseState  = action(baseState)
+        firsUpdate = firsUpdate.next;
+
+     } while (firsUpdate !==hook.queue.pending.next) 
+    
+         hook.queue.pending = null;
+
+    }
+
+      hook.queue.pending = null;
+      return [ baseState, dispatchAction.bind(null, hook.queue ) ]
+   
+    }
+
+       function App(){ 
+           const [num, updateNum] = useState(0)
+           console.log( num );
+           console.log( isMount );
+          return { 
+             onClick(){
+                updateNum(num => num + 1 )
+             }
+
+          }
+       }
+    
+
+
+        window.app = run()
+    </script>
+
+</body>
+</html>
