@@ -35,6 +35,7 @@
     if (queue.pending === null ) {
         update.next =update;
     } else {
+        // 环状链表形成闭环
         update.next = queue.pending.next;
         queue.pending.next = update
     }
@@ -64,6 +65,7 @@
         workInProgressHook = hook
 
       } else {
+          // 逻辑新增时第一个数据指向最后一个 最后一个数据指向第一个 
           hook = workInProgressHook;
           workInProgressHook = workInProgressHook.next;
       }
